@@ -61,6 +61,11 @@ export default function AdminLoginPage() {
       }
 
       // Try Supabase Auth for production
+      if (!supabase) {
+        setError("Authentication service not available. Please try again later.")
+        return
+      }
+
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,

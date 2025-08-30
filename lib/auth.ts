@@ -73,6 +73,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
+      if (!supabase) {
+        setLoading(false)
+        return
+      }
+
       const { data: { session } } = await supabase.auth.getSession()
       if (session?.user) {
         setUser(session.user)
@@ -84,29 +89,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     getInitialSession()
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        // Don't override dev session
-        if (localStorage.getItem('dev_admin_session')) {
-          return
-        }
+    if (supabase) {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          // Don't override dev session
+          if (localStorage.getItem('dev_admin_session')) {
+            return
+          }
 
-        if (session?.user) {
-          setUser(session.user)
-          await fetchProfile(session.user.id)
-        } else {
-          setUser(null)
-          setProfile(null)
+          if (session?.user) {
+            setUser(session.user)
+            await fetchProfile(session.user.id)
+          } else {
+            setUser(null)
+            setProfile(null)
+          }
+          setLoading(false)
         }
-        setLoading(false)
-      }
-    )
+      )
+
+      return () => subscription.unsubscribe()
+    }
 
     return () => subscription.unsubscribe()
   }, [])
 
   const fetchProfile = async (userId: string) => {
     try {
+      if (!supabase) {
+        console.error('Supabase client not initialized')
+        return
+      }
+
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -130,7 +144,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('dev_admin_session')
 
       // Sign out from Supabase
-      await supabase.auth.signOut()
+      if (supabase) {
+        await supabase.auth.signOut()
+      }
       setUser(null)
       setProfile(null)
       router.push('/admin/login')

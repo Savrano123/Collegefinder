@@ -2,6 +2,10 @@ import { supabase, Review } from '../supabase'
 
 // Review-related functions
 export async function getReviewsByEntity(entityType: string, entityId: string, limit = 10) {
+  if (!supabase) {
+    throw new Error('Supabase client not initialized')
+  }
+
   const { data, error } = await supabase
     .from('reviews')
     .select('*')

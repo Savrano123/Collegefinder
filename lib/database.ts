@@ -490,6 +490,10 @@ export async function createForumPost(post: Omit<ForumPost, 'id' | 'created_at' 
 export async function searchContent(query: string, type?: 'colleges' | 'posts') {
   const results: any = {}
 
+  if (!supabase) {
+    throw new Error('Supabase client not initialized')
+  }
+
   if (!type || type === 'colleges') {
     const { data: colleges } = await supabase
       .from('colleges')

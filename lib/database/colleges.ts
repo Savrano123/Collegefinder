@@ -9,6 +9,10 @@ export async function getColleges(filters?: {
   limit?: number
   offset?: number
 }) {
+  if (!supabase) {
+    throw new Error('Supabase client not initialized')
+  }
+
   let query = supabase
     .from('colleges')
     .select('*')
